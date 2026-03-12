@@ -62,7 +62,7 @@ const paciente3: Paciente = {
 };
 
 function criarConsulta(id: number, medico: Medico, paciente: Paciente, data: Date, valor: number): Consulta {
-    return {id, medico, paciente, data, valor, status: "agendada",};
+    return {id, medico, paciente, data, valor, status: "agendada"};
 }
 
 function confirmarConsulta(consulta: Consulta): Consulta {
@@ -78,6 +78,27 @@ function cancelarConsulta(consulta: Consulta): Consulta | null {
         ...consulta,
         status: "cancelada",
     };
+}
+
+function consultaRealizada(consulta: Consulta): Consulta | null {
+    if (consulta.status !== "confirmada") {
+        return null;
+    } else {
+        return {
+            ...consulta,
+            status: "realizada",
+        };
+    };
+}
+
+function listarConsultasPorStatus(consultas: Consulta[], status: StatusConsulta): Consulta[] {
+    return consultas.filter((consulta) => consulta.status === status);
+}
+
+function listarConsultasFuturas(consultas: Consulta[]): Consulta[] {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0); // Zera horas para comparar apenas a data
+    return consultas.filter((consulta) => consulta.data >= hoje);
 }
 
 function exibirConsulta(consulta: Consulta): string {
@@ -98,10 +119,97 @@ function exibirConsulta(consulta: Consulta): string {
 `;
 }
 
+function calcularFaturamento(consultas: Consulta[]): number {
+    return consultas
+        .filter((consulta) => consulta.status === "realizada")
+        .reduce((total, consulta) => total + consulta.valor, 0);
+}
+
+// Testes da Aplicação
+
+// Criar uma consulta
 const consulta1 = criarConsulta(1, medico1, paciente1, new Date(), 350);
 
-
+// Confirmar a consulta
 const consultaConfirmada = confirmarConsulta(consulta1);
+
+// Exibir a consulta confirmada
 console.log("=== CONSULTA CONFIRMADA ===");
 console.log(exibirConsulta(consultaConfirmada));
 
+// Criando uma lista de consultas para teste
+
+console.log("=== LISTA DE CONSULTAS DE TESTE ===");
+console.log("");
+
+let consultasTeste: Consulta[] = [
+    criarConsulta(2, medico2, paciente2, new Date(2026, 2, 20, 9, 0), 450),
+    criarConsulta(3, medico3, paciente3, new Date(2026, 2, 21, 14, 30), 250),
+    criarConsulta(4, medico1, paciente2, new Date(2026, 2, 22, 11, 0), 300),
+    criarConsulta(5, medico2, paciente1, new Date(2026, 2, 23, 16, 15), 400)
+];
+
+// Confirmar a primeira consulta da lista de teste
+if (consultasTeste[0]) {
+    consultasTeste[0] = confirmarConsulta(consultasTeste[0]);
+}
+
+// Cancelar a segunda consulta da lista de teste
+if (consultasTeste[1]) {
+    consultasTeste[1] = cancelarConsulta(consultasTeste[1])!;
+}
+
+// Marcar a terceira consulta como realizada (tem que confirmar ela antes)
+
+if (consultasTeste[2]) {
+    consultasTeste[2] = confirmarConsulta(consultasTeste[2]);
+}
+
+if (consultasTeste[2]) {  
+    consultasTeste[2] = consultaRealizada(consultasTeste[2])!;
+}
+
+// Listar consultas futuras
+const consultasFuturas: Consulta[] = listarConsultasFuturas(consultasTeste);
+
+// Exibir consultas futuras
+console.log("=== CONSULTAS FUTURAS ===");
+consultasFuturas.forEach((consulta) => console.log(exibirConsulta(consulta)));
+console.log("");
+
+// Listar consultas agendadas
+const consultas: Consulta[] = listarConsultasPorStatus(consultasTeste, "agendada");
+
+// Exibir consultas agendadas
+console.log("=== CONSULTAS AGENDADAS ===");
+consultas.forEach((consulta) => console.log(exibirConsulta(consulta)));
+console.log("");
+
+// Listar consultas confirmadas
+const consultasConfirmadas: Consulta[] = listarConsultasPorStatus(consultasTeste, "confirmada");
+
+// Exibir consultas confirmadas
+console.log("=== CONSULTAS CONFIRMADAS ===");
+consultasConfirmadas.forEach((consulta) => console.log(exibirConsulta(consulta)));
+console.log("");
+
+// Listar consultas canceladas
+const consultasCanceladas: Consulta[] = listarConsultasPorStatus(consultasTeste, "cancelada");
+
+// Exibir consultas canceladas
+console.log("=== CONSULTAS CANCELADAS ===");
+consultasCanceladas.forEach((consulta) => console.log(exibirConsulta(consulta)));
+console.log("");
+
+// Listar consultas realizadas
+const consultasRealizadas: Consulta[] = listarConsultasPorStatus(consultasTeste, "realizada");
+
+// Exibir consultas realizadas
+console.log("=== CONSULTAS REALIZADAS ===");
+consultasRealizadas.forEach((consulta) => console.log(exibirConsulta(consulta)));
+console.log("");
+
+// Cálculo do faturamento
+const faturamento = calcularFaturamento(consultasTeste);
+console.log("=== FATURAMENTO TOTAL ===");
+console.log(faturamento.toLocaleString("pt-BR", {style: "currency", currency: "BRL",}));
